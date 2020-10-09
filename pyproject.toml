@@ -1,0 +1,31 @@
+[build-system]
+requires = ["flit_core >=2,<4"]
+build-backend = "flit_core.buildapi"
+
+[tool.flit.scripts]
+flit = "flit:main"
+
+[tool.flit.metadata]
+module = "optoforce"
+author = "Alexander Knemeyer"
+author-email = "alknemeyer@hey.com"
+home-page = "https://github.com/alknemeyer/optoforce"
+requires = [
+    "serial ~= 3.0",
+]
+description-file = "README.md"
+requires-python = ">=3.6"
+keywords = "sensor,optoforce"
+classifiers = [
+    "Intended Audience :: Education",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Topic :: Scientific/Engineering",
+    "Typing :: Typed",
+]
