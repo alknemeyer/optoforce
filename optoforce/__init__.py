@@ -1,3 +1,6 @@
+"""
+    optoforce
+"""
 import serial
 import struct
 import logging
