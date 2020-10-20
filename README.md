@@ -20,18 +20,27 @@ From a python script:
 
 ```python
 # 16 byte frame/single-channel 3 axis force sensor (OMD-45-FH-2000N)
-from optoforce import OptoForce16
+from optoforce import OptoForce16 as OptoForce
 
-with OptoForce16(speed_hz=100, filter_hz=15, zero=False) as force_sensor:
+with OptoForce(speed_hz=100, filter_hz=15, zero=False) as force_sensor:
     measurement = force_sensor.read(only_latest_data=False)
 
     do_stuff_with_force_readings(measurement.fx, measurement.fy, measurement.fz)
 ```
 
+It's still a little verbose, so you may want to define shortcuts for your particular application. For example, if you don't care about anything except the vertical force:
+
+```python
+with OptoForce() as force_sensor:
+    read_fz = lambda: force_sensor.read(only_latest_data=False).Fz
+    while True:
+        print(read_fz())
+```
+
 Or from the command line, to log to a file:
 
 ```bash
-$ python -m optoforce.py --filename force-data.csv
+$ python -m optoforce --filename force-data.csv
 ```
 
 
