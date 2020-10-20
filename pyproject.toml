@@ -11,7 +11,7 @@ author = "Alexander Knemeyer"
 author-email = "alknemeyer@hey.com"
 home-page = "https://github.com/alknemeyer/optoforce"
 requires = [
-    "serial ~= 3.0",
+    "pyserial ~= 3.0",
 ]
 description-file = "README.md"
 requires-python = ">=3.6"
