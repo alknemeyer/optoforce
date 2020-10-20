@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 import argparse
-from . import OptoForce16
+from . import OptoForce16 as OptoForce
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -21,11 +21,12 @@ if __name__ == '__main__':
         level=logging.INFO,
     )
 
-    with OptoForce16() as force_sensor, open(filename, 'w+') as outfile:
+    with OptoForce() as force_sensor, open(filename, 'w+') as outfile:
         outfile.write('time [H:M:S:f],Fx [N],Fy [N],Fz [N]\n')
         print(f'Writing data to {filename} - press ctrl-c to stop...')
 
         while True:
-            measurement = force_sensor.read(only_latest_data=False)
+            # take a measurement
+            m = force_sensor.read(only_latest_data=False)
             t = datetime.now().strftime('%H:%M:%S:%f')
-            outfile.write(f'{t},{measurement.Fx},{measurement.Fy},{measurement.Fz}\n')
+            outfile.write(f'{t},{m.Fx},{m.Fy},{m.Fz}\n')
