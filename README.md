@@ -1,4 +1,4 @@
-# `from optoforce import OptoForce`
+# `import optoforce`
 
 A package which simplifies connecting to and reading from optoforce sensors, using Python
 
@@ -19,12 +19,13 @@ python -m pip install optoforce
 From a python script:
 
 ```python
-from optoforce import OptoForce
+# 16 byte frame/single-channel 3 axis force sensor (OMD-45-FH-2000N)
+from optoforce import OptoForce16
 
-with OptoForce(speed_hz=100, filter_hz=15, reset_on_thing=False) as force_sensor:
-    fx, fy, fx = force_sensor.read(only_latest_data=False)
+with OptoForce16(speed_hz=100, filter_hz=15, zero=False) as force_sensor:
+    measurement = force_sensor.read(only_latest_data=False)
 
-    do_stuff_with_force_readings(fx, fy, fz)
+    do_stuff_with_force_readings(measurement.fx, measurement.fy, measurement.fz)
 ```
 
 Or from the command line, to log to a file:
@@ -33,9 +34,16 @@ Or from the command line, to log to a file:
 $ python -m optoforce.py --filename force-data.csv
 ```
 
+
 ## Optoforce models supported
 
-Only the single-channel 3 axis force sensor, though adding support for the others should be straightforward
+_Possibly_,
+
+* 16 byte frame/single-channel 3 axis force sensor (OMD-45-FH-2000N)
+* 34 byte frame/multi-channel 3 axis force sensor (4 channels)
+* 22 byte frame/single-channel 6 axis force/torque sensor
+
+but I only have access to the 16 byte frame model, so I can't test the other two. They should work, but the torque readings aren't scaled as I don't have that datasheet :/
 
 
 ## Sources
@@ -54,6 +62,7 @@ If you get permission errors when trying to open the serial port and you run lin
 ```bash
 $ sudo chmod 666 /dev/ttyACM0  # replace with your serial port
 ```
+
 
 ## Publishing a new version
 

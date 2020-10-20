@@ -2,13 +2,13 @@
     optoforce
 """
 import serial
-import struct
 import logging
 from serial.tools.list_ports import comports
-from typing import Literal, Tuple, Optional
+from typing import Literal, Optional
+from .reading import read_16bytes, read_22bytes, read_34bytes
 
-__version__ = '0.0.1'
-__all__ = ['OptoForce']
+__version__ = '0.1'
+__all__ = ['OptoForce16', 'OptoForce34', 'OptoForce22']
 
 logger = logging.getLogger(__name__)
 
@@ -20,10 +20,6 @@ OPTO_PARAMS = {
     'parity': serial.PARITY_NONE,
     'bytesize': serial.EIGHTBITS,
 }
-
-FX_SCALE = 1/7925 * 300   # ~= 1/26.42
-FY_SCALE = 1/8641 * 300   # ~= 1/28.8
-FZ_SCALE = 1/6049 * 2000  # ~= 1/3.02
 
 SPEED_MAPPING = {
     'stop': 0,
@@ -63,11 +59,16 @@ def find_optoforce_port() -> str:
         raise RuntimeError(f'Found more than one OptoForce: {devices}')
 
 
-class OptoForce:
+class _OptoForce:
     def __init__(self, port: Optional[str] = None,
                  speed_hz: SPEEDS = 100,
                  filter_hz: FILTERS = 15,
                  zero: bool = False):
+        if speed_hz not in SPEED_MAPPING:
+            raise KeyError(f'speed_hz must be one of: {list(SPEED_MAPPING.keys())}. Got: {speed_hz}')
+        if filter_hz not in FILTER_MAPPING:
+            raise KeyError(f'filter_hz must be one of: {list(FILTER_MAPPING.keys())}. Got: {filter_hz}')
+
         self.speed = SPEED_MAPPING[speed_hz]
         self.filter = FILTER_MAPPING[filter_hz]
         self.zero = 255 if zero else 0
@@ -91,30 +92,22 @@ class OptoForce:
         logger.info(f'sending configuration bytes: {payload}')
         self.opt_ser.write(payload)
 
-    def read(self, only_latest_data: bool) -> Tuple[float, float, float]:
+    def read(self, only_latest_data: bool):
         # opt_ser.in_waiting returns the number of bytes in the buffer
         if only_latest_data and self.opt_ser.in_waiting > 16:
 
             # flush input to make sure we don't read old data
             self.opt_ser.reset_input_buffer()
 
-        expected_header = bytes((170, 7, 8, 10))  # => b'\xaa\x07\x08\n'
+        expected_header = bytes((170, 7, 8, 10))
         self.opt_ser.read_until(expected_header)
 
-        # https://docs.python.org/3/library/struct.html#format-characters
-        count, status, fx, fy, fz, checksum = (
-            struct.unpack('>HHhhhH', self.opt_ser.read(12))
-        )
-
-        logger.debug(
-            f'received data: {count}, {status}, {fx}, {fy}, {fz}, {checksum}'
-        )
-
-        return (fx * FX_SCALE, fy*FY_SCALE, fz*FZ_SCALE)
+        logger.debug('received frame header')
 
     def close(self):
-        self.opt_ser.close()
-        logger.info('closed connection')
+        if hasattr(self, 'opt_ser'):
+            self.opt_ser.close()
+            logger.info('closed connection')
 
     def __enter__(self):
         self.connect()
@@ -125,3 +118,35 @@ class OptoForce:
 
     def __del__(self):
         self.close()
+
+
+HEADER_SIZE = 4
+
+
+class OptoForce16(_OptoForce):
+    def read(self, only_latest_data: bool):
+        super().read(only_latest_data)
+        return read_16bytes(self.opt_ser.read(16 - HEADER_SIZE))
+
+
+class OptoForce34(_OptoForce):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        logging.warning('this force sensor model hasn\'t been tested. '
+                        'Please mention on the source repo how it went!')
+
+    def read(self, only_latest_data: bool):
+        super().read(only_latest_data)
+        return read_34bytes(self.opt_ser.read(34 - HEADER_SIZE))
+
+
+class OptoForce22(_OptoForce):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        logging.warning('this force sensor model hasn\'t been tested. '
+                        'Please mention on the source repo how it went! '
+                        'Also, the torques aren\'t scaled, since I don\'t have that datasheet!')
+
+    def read(self, only_latest_data: bool):
+        super().read(only_latest_data)
+        return read_22bytes(self.opt_ser.read(22 - HEADER_SIZE))
