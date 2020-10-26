@@ -7,7 +7,7 @@ from serial.tools.list_ports import comports
 from typing import Literal, Optional
 from .reading import read_16bytes, read_22bytes, read_34bytes
 
-__version__ = '0.1.1'
+__version__ = '0.2.0'
 __all__ = ['OptoForce16', 'OptoForce34', 'OptoForce22']
 
 logger = logging.getLogger(__name__)
