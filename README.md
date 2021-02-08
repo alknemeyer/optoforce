@@ -25,8 +25,10 @@ from optoforce import OptoForce16 as OptoForce
 with OptoForce(speed_hz=100, filter_hz=15, zero=False) as force_sensor:
     measurement = force_sensor.read(only_latest_data=False)
 
-    do_stuff_with_force_readings(measurement.fx, measurement.fy, measurement.fz)
+    do_stuff_with_force_readings(measurement.Fx, measurement.Fy, measurement.Fz)
 ```
+
+A call to `OptoForce.read()` returns a measurement packet (a NamedTuple) containing force readings and other potentially useful data. For the specifics of each sensor model, see `Reading16`, `Reading34` and `Reading22` in [`optoforce/reading.py`](./optoforce/reading.py). 
 
 It's still a little verbose, so you may want to define shortcuts for your particular application. For example, if you don't care about anything except the vertical force:
 
@@ -44,7 +46,7 @@ $ python -m optoforce --filename force-data.csv
 ```
 
 
-## Optoforce models supported
+## OptoForce models supported
 
 _Possibly_,
 
@@ -52,7 +54,7 @@ _Possibly_,
 * 34 byte frame/multi-channel 3 axis force sensor (4 channels)
 * 22 byte frame/single-channel 6 axis force/torque sensor
 
-but I only have access to the 16 byte frame model, so I can't test the other two. They should work, but the torque readings aren't scaled as I don't have that datasheet :/
+but I only have access to the 16 byte frame model, so I can't test the other two. The 34 byte model [has been reported to work too](https://github.com/alknemeyer/optoforce/issues/1). I imagine this means that the 22 byte model will be fine, but the torque readings aren't scaled as I don't have that datasheet :/
 
 
 ## Sources
@@ -71,6 +73,8 @@ If you get permission errors when trying to open the serial port and you run lin
 ```bash
 $ sudo chmod 666 /dev/ttyACM0  # replace with your serial port
 ```
+
+Permission errors [can also happen on Windows](https://github.com/alknemeyer/optoforce/issues/1) -- you'll know that's the case when you get an error which includes `Original message: PermissionError(...)`.  That can happen when [something else is using the device](https://stackoverflow.com/questions/59993883/pyserial-permissionerror13-access-denied-none-5/63922626#63922626). In that case, making sure no other program is connected to the device should work. You could do that by unplugging the sensor, and plugging it back in again.
 
 
 ## Publishing a new version
