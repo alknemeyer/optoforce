@@ -14,7 +14,7 @@ except ImportError:
 
 from .reading import read_16bytes, read_22bytes, read_34bytes
 
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 __all__ = ['OptoForce16', 'OptoForce34', 'OptoForce22']
 
 logger = logging.getLogger(__name__)
@@ -99,14 +99,13 @@ class _OptoForce:
         logger.info(f'sending configuration bytes: {payload}')
         self.opt_ser.write(payload)
 
-    def read(self, only_latest_data: bool):
+    def read(self, only_latest_data: bool, expected_header: bytes):
         # opt_ser.in_waiting returns the number of bytes in the buffer
         if only_latest_data and self.opt_ser.in_waiting > 16:
 
             # flush input to make sure we don't read old data
             self.opt_ser.reset_input_buffer()
 
-        expected_header = bytes((170, 7, 8, 10))
         self.opt_ser.read_until(expected_header)
 
         logger.debug('received frame header')
@@ -127,33 +126,31 @@ class _OptoForce:
         self.close()
 
 
-HEADER_SIZE = 4
-
-
 class OptoForce16(_OptoForce):
+    _expected_header = bytes((170, 7, 8, 10))
+
     def read(self, only_latest_data: bool):
-        super().read(only_latest_data)
-        return read_16bytes(self.opt_ser.read(16 - HEADER_SIZE))
+        super().read(only_latest_data, self._expected_header)
+        return read_16bytes(self.opt_ser.read(16 - len(self._expected_header)))
 
 
 class OptoForce34(_OptoForce):
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        logging.warning('this force sensor model hasn\'t been tested. '
-                        'Please mention on the source repo how it went!')
+    _expected_header = bytes((170, 7, 8, 28))
 
     def read(self, only_latest_data: bool):
-        super().read(only_latest_data)
-        return read_34bytes(self.opt_ser.read(34 - HEADER_SIZE))
+        super().read(only_latest_data, self._expected_header)
+        return read_34bytes(self.opt_ser.read(34 - len(self._expected_header)))
 
 
 class OptoForce22(_OptoForce):
+    _expected_header = bytes((170, 7, 8, 16))
+    
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        logging.warning('this force sensor model hasn\'t been tested. '
+        logging.warning('This force sensor model hasn\'t been tested. '
                         'Please mention on the source repo how it went! '
                         'Also, the torques aren\'t scaled, since I don\'t have that datasheet!')
 
     def read(self, only_latest_data: bool):
-        super().read(only_latest_data)
-        return read_22bytes(self.opt_ser.read(22 - HEADER_SIZE))
+        super().read(only_latest_data, self._expected_header)
+        return read_22bytes(self.opt_ser.read(22 - len(self._expected_header)))
