@@ -25,8 +25,11 @@ if __name__ == '__main__':
         outfile.write('time [H:M:S:f],Fx [N],Fy [N],Fz [N]\n')
         print(f'Writing data to {filename} - press ctrl-c to stop...')
 
-        while True:
-            # take a measurement
-            m = force_sensor.read(only_latest_data=False)
-            t = datetime.now().strftime('%H:%M:%S:%f')
-            outfile.write(f'{t},{m.Fx},{m.Fy},{m.Fz}\n')
+        try:
+            while True:
+                # take a measurement
+                m = force_sensor.read(only_latest_data=False)
+                t = datetime.now().strftime('%H:%M:%S:%f')
+                outfile.write(f'{t},{m.Fx},{m.Fy},{m.Fz}\n')
+        except KeyboardInterrupt:
+            pass
