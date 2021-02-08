@@ -28,7 +28,7 @@ with OptoForce(speed_hz=100, filter_hz=15, zero=False) as force_sensor:
     do_stuff_with_force_readings(measurement.Fx, measurement.Fy, measurement.Fz)
 ```
 
-A call to `OptoForce.read()` returns a measurement packet (a NamedTuple) containing force readings and other potentially useful data. For the specifics of each sensor model, see `Reading16`, `Reading34` and `Reading22` in [`optoforce/reading.py`](./optoforce/reading.py). 
+A call to `OptoForce.read()` returns a measurement packet (a NamedTuple) containing force readings and other potentially useful data. For the specifics of each sensor model, see `Reading16`, `Reading34` and `Reading22` in [`optoforce/reading.py`](./optoforce/reading.py). For example `OptoForce34` returns force readings as  `Fx1`, `Fy1`, `Fz1`, `Fx2`, ... (not `Fx`, `Fy`, `Fz`) as there are multiple channels
 
 It's still a little verbose, so you may want to define shortcuts for your particular application. For example, if you don't care about anything except the vertical force:
 
