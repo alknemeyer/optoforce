@@ -4,7 +4,14 @@
 import serial
 import logging
 from serial.tools.list_ports import comports
-from typing import Literal, Optional
+from typing import Optional
+
+# typing.Literal introduced in Python v3.8
+try:
+    from typing import Literal  # type: ignore
+except ImportError:
+    from typing_extensions import Literal  # type: ignore
+
 from .reading import read_16bytes, read_22bytes, read_34bytes
 
 __version__ = '0.2.0'
