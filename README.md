@@ -45,6 +45,8 @@ Or from the command line, to log to a file:
 $ python -m optoforce --filename force-data.csv
 ```
 
+If you want to detect and handle sensor errors as reported in the status word, look at the doc string in [`optoforce/status.py`](./optoforce/status.py). It was written for completeness after I finished my use for the OptoForce, so it hasn't been tested!
+
 
 ## OptoForce models supported
 
