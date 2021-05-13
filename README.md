@@ -39,6 +39,12 @@ with OptoForce() as force_sensor:
         print(read_fz())
 ```
 
+If you haven't read the force force sensor in a little while and want to get all the packets waiting in the buffer, use:
+
+```python
+measurements = force_sensor.read_all_packets_in_buffer()
+```
+
 Or from the command line, to log to a file:
 
 ```bash

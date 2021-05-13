@@ -4,7 +4,7 @@
 import serial
 import logging
 from serial.tools.list_ports import comports
-from typing import Optional
+from typing import Callable, Generic, List, Optional, TypeVar
 
 # typing.Literal introduced in Python v3.8
 try:
@@ -12,7 +12,7 @@ try:
 except ImportError:
     from typing_extensions import Literal  # type: ignore
 
-from .reading import read_16bytes, read_22bytes, read_34bytes
+from .reading import Reading16, Reading22, Reading34, read_16bytes, read_22bytes, read_34bytes
 
 __version__ = '0.2.1'
 __all__ = ['OptoForce16', 'OptoForce34', 'OptoForce22']
@@ -34,7 +34,7 @@ SPEED_MAPPING = {
     333: 3,
     100: 10,
     30: 33,
-    10: 100
+    10: 100,
 }
 # must be one of these specific values:
 SPEEDS = Literal['stop', 1000, 333, 100, 30, 10]
@@ -46,7 +46,7 @@ FILTER_MAPPING = {
     50: 3,
     15: 4,
     5: 5,
-    1.5: 6
+    1.5: 6,
 }
 FILTERS = Literal['none', 500, 150, 50, 15, 5, 1.5]
 
@@ -66,8 +66,16 @@ def find_optoforce_port() -> str:
         raise RuntimeError(f'Found more than one OptoForce: {devices}')
 
 
-class _OptoForce:
-    def __init__(self, port: Optional[str] = None,
+T = TypeVar("T")
+
+class _OptoForce(Generic[T]):
+    # attributes which are filled in by the classes that inherit from this one
+    _expected_header: bytes
+    _packet_size: int
+    _decoder: Callable[[bytes], T]
+
+    def __init__(self,
+                 port: Optional[str] = None,
                  speed_hz: SPEEDS = 100,
                  filter_hz: FILTERS = 15,
                  zero: bool = False):
@@ -99,16 +107,40 @@ class _OptoForce:
         logger.info(f'sending configuration bytes: {payload}')
         self.opt_ser.write(payload)
 
-    def read(self, only_latest_data: bool, expected_header: bytes):
+    def read(self, only_latest_data: bool) -> T:
+        """
+        Read a packet from the serial buffer. If `only_latest_data` is True,
+        and there is more than one packet waiting in the buffer, flush the buffer
+        until there is only one packet left (the latest packet). Otherwise,
+        just read the next packet in the buffer, even if that packet is slightly
+        old.
+        """
         # opt_ser.in_waiting returns the number of bytes in the buffer
-        if only_latest_data and self.opt_ser.in_waiting > 16:
+        if only_latest_data and self.opt_ser.in_waiting > self._packet_size:
 
             # flush input to make sure we don't read old data
             self.opt_ser.reset_input_buffer()
 
-        self.opt_ser.read_until(expected_header)
-
+        # Start by reading data from the input buffer until the header `expected_bytes`
+        # is found. This flushes data until a packet is found
+        self.opt_ser.read_until(self._expected_header)
         logger.debug('received frame header')
+
+        # next, read the body of the packet
+        raw_data = self.opt_ser.read(self._packet_size - len(self._expected_header))
+
+        # decode (deserialize) the bytes into regular Python data
+        return self._decoder(raw_data)
+
+    def read_all_packets_in_buffer(self) -> List[T]:
+        """
+        Read all packets in the buffer. Note that the `count` attribute of a packet
+        can be used to tell when the packet was sent from the optoforce.
+        """
+        data: List[T] = []
+        while self.opt_ser.in_waiting >= self._packet_size:
+            data.append(self.read(only_latest_data=False))
+        return data
 
     def close(self):
         if hasattr(self, 'opt_ser'):
@@ -125,32 +157,27 @@ class _OptoForce:
     def __del__(self):
         self.close()
 
+##
 
-class OptoForce16(_OptoForce):
+class OptoForce16(_OptoForce[Reading16]):
     _expected_header = bytes((170, 7, 8, 10))
-
-    def read(self, only_latest_data: bool):
-        super().read(only_latest_data, self._expected_header)
-        return read_16bytes(self.opt_ser.read(16 - len(self._expected_header)))
+    _packet_size = 16
+    _decoder = read_16bytes
 
 
-class OptoForce34(_OptoForce):
+class OptoForce34(_OptoForce[Reading34]):
     _expected_header = bytes((170, 7, 8, 28))
-
-    def read(self, only_latest_data: bool):
-        super().read(only_latest_data, self._expected_header)
-        return read_34bytes(self.opt_ser.read(34 - len(self._expected_header)))
+    _packet_size = 34
+    _decoder = read_34bytes
 
 
-class OptoForce22(_OptoForce):
+class OptoForce22(_OptoForce[Reading22]):
     _expected_header = bytes((170, 7, 8, 16))
+    _packet_size = 22
+    _decoder = read_22bytes
     
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        logging.warning('This force sensor model hasn\'t been tested. '
-                        'Please mention on the source repo how it went! '
-                        'Also, the torques aren\'t scaled, since I don\'t have that datasheet!')
-
-    def read(self, only_latest_data: bool):
-        super().read(only_latest_data, self._expected_header)
-        return read_22bytes(self.opt_ser.read(22 - len(self._expected_header)))
+        logger.warning("This force sensor model hasn't been tested. "
+                       "Please mention on the source repo how it went! "
+                       "Also, the torques aren't scaled, since I don't have that datasheet!")
