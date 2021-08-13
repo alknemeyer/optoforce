@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 import argparse
 from . import OptoForce16 as OptoForce
+from . import status
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -29,6 +30,16 @@ if __name__ == '__main__':
             while True:
                 # take a measurement
                 m = force_sensor.read(only_latest_data=False)
+
+                # check that the checksum is valid, and that there weren't any errors
+                if not m.valid_checksum:
+                    logging.warning("Got message with invalid checksum")
+
+                    continue
+                if not status.no_errors(m.status):
+                    logging.warning("Got errors in the measurement status")
+                    continue
+
                 t = datetime.now().strftime('%H:%M:%S:%f')
                 outfile.write(f'{t},{m.Fx},{m.Fy},{m.Fz}\n')
         except KeyboardInterrupt:
