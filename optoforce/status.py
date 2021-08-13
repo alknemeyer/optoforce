@@ -38,7 +38,7 @@ def error(status: int) -> Tuple[str, str]:
     >>> error((0b001 << 13) + (0b010 << 10))
     ('daq error', 'sensor failure')
     """
-    return DAQ_TYPE[(status >> 13) & 0b111], SENSOR_TYPE[(status >> 10) & 0b111]
+    return DAQ_TYPE[(status >> 13) & 0b111], SENSOR_TYPE[(status >> 10) & 0b111]  # type: ignore
 
 ###
 
@@ -105,7 +105,7 @@ def decode(status: int):
     (('communication error', 'temperature error'),
      ['Fz', 'Tx', 'Ty'],
      ('only a single sensor has error (or no error)', 'sensor #4'))
-    
+
     An example where everything seems fine:
 
     >>> check_status(0)

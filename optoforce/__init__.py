@@ -68,6 +68,7 @@ def find_optoforce_port() -> str:
 
 T = TypeVar("T")
 
+
 class _OptoForce(Generic[T]):
     # attributes which are filled in by the classes that inherit from this one
     _expected_header: bytes
@@ -80,9 +81,13 @@ class _OptoForce(Generic[T]):
                  filter_hz: FILTERS = 15,
                  zero: bool = False):
         if speed_hz not in SPEED_MAPPING:
-            raise KeyError(f'speed_hz must be one of: {list(SPEED_MAPPING.keys())}. Got: {speed_hz}')
+            raise KeyError(
+                f'speed_hz must be one of: {list(SPEED_MAPPING.keys())}. Got: {speed_hz}'
+            )
         if filter_hz not in FILTER_MAPPING:
-            raise KeyError(f'filter_hz must be one of: {list(FILTER_MAPPING.keys())}. Got: {filter_hz}')
+            raise KeyError(
+                f'filter_hz must be one of: {list(FILTER_MAPPING.keys())}. Got: {filter_hz}'
+            )
 
         self.speed = SPEED_MAPPING[speed_hz]
         self.filter = FILTER_MAPPING[filter_hz]
@@ -127,7 +132,9 @@ class _OptoForce(Generic[T]):
         logger.debug('received frame header')
 
         # next, read the body of the packet
-        raw_data = self.opt_ser.read(self._packet_size - len(self._expected_header))
+        raw_data = self.opt_ser.read(
+            self._packet_size - len(self._expected_header)
+        )
 
         # decode (deserialize) the bytes into regular Python data
         return self._decoder(raw_data)
@@ -158,6 +165,7 @@ class _OptoForce(Generic[T]):
         self.close()
 
 ##
+
 
 class OptoForce16(_OptoForce[Reading16]):
     _expected_header = bytes((170, 7, 8, 10))
