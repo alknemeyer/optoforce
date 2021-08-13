@@ -18,7 +18,7 @@ except ImportError:
 
 from .reading import Reading16, Reading22, Reading34, read_16bytes, read_22bytes, read_34bytes
 
-__version__ = '0.2.1'
+__version__ = '0.3.0'
 __all__ = ['OptoForce16', 'OptoForce34', 'OptoForce22', 'status']
 
 logger = logging.getLogger(__name__)
