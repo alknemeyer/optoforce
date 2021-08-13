@@ -1,5 +1,8 @@
 """
+
     optoforce
+
+A package which simplifies connecting to and reading from optoforce sensors
 """
 import serial
 import logging

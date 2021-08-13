@@ -21,9 +21,12 @@ From a python script:
 ```python
 # 16 byte frame/single-channel 3 axis force sensor (OMD-45-FH-2000N)
 from optoforce import OptoForce16 as OptoForce
+from optoforce.status import no_errors
 
 with OptoForce(speed_hz=100, filter_hz=15, zero=False) as force_sensor:
     measurement = force_sensor.read(only_latest_data=False)
+    assert measurement.valid_checksum
+    assert no_errors(measurement.status)
 
     do_stuff_with_force_readings(measurement.Fx, measurement.Fy, measurement.Fz)
 ```
@@ -85,13 +88,39 @@ $ sudo chmod 666 /dev/ttyACM0  # replace with your serial port
 Permission errors [can also happen on Windows](https://github.com/alknemeyer/optoforce/issues/1) -- you'll know that's the case when you get an error which includes `Original message: PermissionError(...)`.  That can happen when [something else is using the device](https://stackoverflow.com/questions/59993883/pyserial-permissionerror13-access-denied-none-5/63922626#63922626). In that case, making sure no other program is connected to the device should work. You could do that by unplugging the sensor, and plugging it back in again.
 
 
-## Publishing a new version
+## Developing
 
-Install [flit](https://flit.readthedocs.io/en/latest/), which makes publishing packages ridiculously easy. Next, increase the `__version__` number in [`optoforce/__init__.py`](optoforce/__init__.py). Then, create a (local) tag for the commit and publish:
+See [`python-template`](https://github.com/alknemeyer/python-template/) for some general tips on Python package development.
+
+Run unit tests using `pytest`. You should see output similar to,
 
 ```bash
-# make a local tag with message "release v0.0.1"
-$ git tag -a v0.0.1 -m "release v0.0.1"
+$ python -m pytest
+======================================== test session starts ========================================
+platform linux -- Python 3.9.6, pytest-6.2.4, py-1.10.0, pluggy-0.13.1
+rootdir: /home/alex/dev/optoforce, configfile: pyproject.toml, testpaths: tests
+collected 6 items                                                                                   
+
+tests/test_all.py ......
+
+========================================= 6 passed in 0.02s =========================================
+```
+
+If you have `matplotlib` installed, you can run a more visual test using
+
+```bash
+$ python test-plot.py
+```
+
+### Publishing a new version
+
+Install [flit](https://flit.readthedocs.io/en/latest/), which makes publishing packages ridiculously easy. You can install it as part of your development environment, or in a base/systemwide environment, as it's just used for publishing but isn't a requirement of the package itself.
+
+Next, increase the `__version__` number in [`optoforce/__init__.py`](optoforce/__init__.py). Then, create a (local) tag for the commit and publish:
+
+```bash
+# make a local tag of the current commit
+$ git tag v0.0.1
 # push local tag to remote repo
 $ git push origin v0.0.1
 # generate files into dist/ and upload them to pypi
