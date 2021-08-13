@@ -4,7 +4,7 @@
 import serial
 import logging
 from serial.tools.list_ports import comports
-from typing import Callable, Generic, List, Optional, TypeVar
+from typing import Generic, List, Optional, TypeVar
 
 # typing.Literal introduced in Python v3.8
 try:
@@ -72,7 +72,7 @@ class _OptoForce(Generic[T]):
     # attributes which are filled in by the classes that inherit from this one
     _expected_header: bytes
     _packet_size: int
-    _decoder: Callable[[bytes], T]
+    def _decoder(self, b: bytes) -> T: ...
 
     def __init__(self,
                  port: Optional[str] = None,
@@ -162,20 +162,20 @@ class _OptoForce(Generic[T]):
 class OptoForce16(_OptoForce[Reading16]):
     _expected_header = bytes((170, 7, 8, 10))
     _packet_size = 16
-    _decoder = read_16bytes
+    def _decoder(self, b): return read_16bytes(self._expected_header, b)
 
 
 class OptoForce34(_OptoForce[Reading34]):
     _expected_header = bytes((170, 7, 8, 28))
     _packet_size = 34
-    _decoder = read_34bytes
+    def _decoder(self, b): return read_34bytes(self._expected_header, b)
 
 
 class OptoForce22(_OptoForce[Reading22]):
     _expected_header = bytes((170, 7, 8, 16))
     _packet_size = 22
-    _decoder = read_22bytes
-    
+    def _decoder(self, b): return read_22bytes(self._expected_header, b)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         logger.warning("This force sensor model hasn't been tested. "
