@@ -5,6 +5,7 @@ import serial
 import logging
 from serial.tools.list_ports import comports
 from typing import Generic, List, Optional, TypeVar
+from . import status
 
 # typing.Literal introduced in Python v3.8
 try:
@@ -15,7 +16,7 @@ except ImportError:
 from .reading import Reading16, Reading22, Reading34, read_16bytes, read_22bytes, read_34bytes
 
 __version__ = '0.2.1'
-__all__ = ['OptoForce16', 'OptoForce34', 'OptoForce22']
+__all__ = ['OptoForce16', 'OptoForce34', 'OptoForce22', 'status']
 
 logger = logging.getLogger(__name__)
 
