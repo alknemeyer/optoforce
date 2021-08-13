@@ -112,6 +112,8 @@ If you have `matplotlib` installed, you can run a more visual test using
 $ python test-plot.py
 ```
 
+![Plot of sensor data](./test-plot.png)
+
 ### Publishing a new version
 
 Install [flit](https://flit.readthedocs.io/en/latest/), which makes publishing packages ridiculously easy. You can install it as part of your development environment, or in a base/systemwide environment, as it's just used for publishing but isn't a requirement of the package itself.
